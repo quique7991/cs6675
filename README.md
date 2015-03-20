@@ -1,6 +1,12 @@
 # cs6675
 ## Advanced Internet Computing Systems and Applications
 
+### Useful notes
+
+To limit the maximum number of connections we can use:
+
+rtcMultiConnection.maxParticipantsAllowed = <Desired Value>
+
 ### Best step by step simple example
 
 https://bitbucket.org/webrtc/codelab/src/c75c8e837a125441d2ee008c55348ac5a24a85d4/README.md?at=master
