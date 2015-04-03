@@ -35,7 +35,11 @@ http://www.tokbox.com/blog/mantis-next-generation-cloud-technology-for-webrtc/
 
 http://www.html5rocks.com/en/tutorials/webrtc/basics/
 
-To generate key pairs with openssl:
+###To generate key pairs with openssl:
 
 openssl req -newkey rsa:2048 -new -nodes -x509 -keyout key.pem -out cert.pem
+
+###TURN:
+
+trixie.no-ip.info:12035
 
