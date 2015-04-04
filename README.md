@@ -45,3 +45,7 @@ openssl req -newkey rsa:2048 -new -nodes -x509 -keyout key.pem -out cert.pem
 
 trixie.no-ip.info:12035
 
+###Running the TURN server:
+
+sudo turnserver -v -a -b turnserverdb.conf -r trixie.no-ip.info
+
