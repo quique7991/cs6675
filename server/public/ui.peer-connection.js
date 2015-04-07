@@ -101,7 +101,7 @@ rtcMultiConnection.onopen = function(e) {
         color: e.extra.color
     });
 
-    numbersOfUsers.innerHTML = parseInt(numbersOfUsers.innerHTML) + 1;
+    addUsername(e.extra.username);
 };
 
 var whoIsTyping = document.querySelector('#who-is-typing');
@@ -280,7 +280,10 @@ rtcMultiConnection.onstream = function(e) {
             color: e.extra.color
         });
     }
-    usersContainer.appendChild(e.mediaElement);
+
+    addStreamerUsername(e.extra.username);
+    appendVideoElement(e.mediaElement);
+    //usersContainer.appendChild(e.mediaElement);
 };
 
 rtcMultiConnection.sendMessage = function(message) {
@@ -296,4 +299,6 @@ rtcMultiConnection.onclose = rtcMultiConnection.onleave = function(event) {
         userinfo: getUserinfo(rtcMultiConnection.blobURLs[event.userid], 'images/info.png'),
         color: event.extra.color
     });
+
+    removeUsername(event.extra.username);
 };

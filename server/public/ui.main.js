@@ -21,6 +21,7 @@ function addNewMessage(args) {
     var newMessageDIV = document.createElement('div');
     newMessageDIV.className = 'new-message';
 
+    /* Commenting out userinfo
     var userinfoDIV = document.createElement('div');
     userinfoDIV.className = 'user-info';
     userinfoDIV.innerHTML = args.userinfo || '<img src="images/user.png">';
@@ -28,13 +29,14 @@ function addNewMessage(args) {
     userinfoDIV.style.background = args.color || rtcMultiConnection.extra.color || getRandomColor();
 
     newMessageDIV.appendChild(userinfoDIV);
+    */
 
     var userActivityDIV = document.createElement('div');
     userActivityDIV.className = 'user-activity';
 
     userActivityDIV.innerHTML = '<h2 class="header">' + args.header + '</h2>';
 
-    var p = document.createElement('p');
+    var p = document.createElement('span');
     p.className = 'message';
     userActivityDIV.appendChild(p);
     p.innerHTML = args.message;
@@ -43,7 +45,9 @@ function addNewMessage(args) {
 
     main.insertBefore(newMessageDIV, main.firstChild);
 
+    /*
     userinfoDIV.style.height = newMessageDIV.clientHeight + 'px';
+    */
 
     if (args.callback) {
         args.callback(newMessageDIV);
@@ -76,6 +80,7 @@ main.querySelector('#continue').onclick = function() {
     yourName.disabled = roomName.disabled = this.disabled = true;
 
     var username = yourName.value || 'Anonymous';
+    addUsername(username);
 
     rtcMultiConnection.extra = {
         username: username,
@@ -97,7 +102,7 @@ main.querySelector('#continue').onclick = function() {
         if (data.isChannelPresent == false) {
             addNewMessage({
                 header: username,
-                message: 'No room found. Creating new room...<br /><br />You can share following room-id with your friends: <input type=text value="' + roomid + '">',
+                message: 'No room found.  Creating room ' + roomid + '...',
                 userinfo: '<img src="images/action-needed.png">'
             });
 
@@ -125,52 +130,10 @@ function getUserinfo(blobURL, imageURL) {
 
 var isShiftKeyPressed = false;
 
-getElement('.main-input-box textarea').onkeydown = function(e) {
-    if (e.keyCode == 16) {
-        isShiftKeyPressed = true;
-    }
-};
-
-var numberOfKeys = 0;
-getElement('.main-input-box textarea').onkeyup = function(e) {
-    numberOfKeys++;
-    if (numberOfKeys > 3) numberOfKeys = 0;
-
-    if (!numberOfKeys) {
-        if (e.keyCode == 8) {
-            return rtcMultiConnection.send({
-                stoppedTyping: true
-            });
-        }
-
-        rtcMultiConnection.send({
-            typing: true
-        });
-    }
-
-    if (isShiftKeyPressed) {
-        if (e.keyCode == 16) {
-            isShiftKeyPressed = false;
-        }
-        return;
-    }
-
-
-    if (e.keyCode != 13) return;
-
-    addNewMessage({
-        header: rtcMultiConnection.extra.username,
-        message: 'Your Message:<br /><br />' + linkify(this.value),
-        userinfo: getUserinfo(rtcMultiConnection.blobURLs[rtcMultiConnection.userid], 'images/chat-message.png'),
-        color: rtcMultiConnection.extra.color
-    });
-
-    rtcMultiConnection.send(this.value);
-
-    this.value = '';
-};
-
+var currentlyStreaming = false;
 getElement('#allow-webcam').onclick = function() {
+    currentlyStreaming = true;
+
     this.disabled = true;
 
     var session = { audio: true, video: true };
@@ -244,4 +207,129 @@ function bytesToSize(bytes) {
     if (bytes == 0) return '0 Bytes';
     var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
     return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i];
+}
+
+/** New stuff */
+
+var streamerUsernames = [];  // assumed to be unique!
+var allUsernames = [];
+var numbersOfStreamers = getElement('.numbers-of-streamers');
+var MAX_STREAMERS = parseInt(getElement('#max-streamers').innerHTML);
+
+var videoContainers = [
+    getElement('#video1'),
+    getElement('#video2'),
+    getElement('#video3'),
+    getElement('#video4')
+];
+
+// setup video click handlers
+(function setupClickHandlers() {
+    for (var i = 0; i < videoContainers.length; i++) {
+        videoContainers[i].onclick = setAsPrimaryVideo;
+    }
+})();
+
+function setAsPrimaryVideo() {
+    console.log('on-video-click');
+    var primaryContainer = getElement('.primary-video');
+    if (this !== primaryContainer) {
+        primaryContainer.className = 'secondary-video';
+        this.className = 'primary-video';
+    }
+}
+
+function addStreamerUsername(username) {
+    if (streamerUsernames.indexOf(username) === -1) {
+        streamerUsernames.push(username);
+        addUsername(username);  // ensure streamers is subset of all
+        updateNumbersOfStreamers();
+    }
+}
+
+function removeStreamerUsername(username) {
+    index = streamerUsernames.indexOf(username);
+    if (index !== -1) {
+        streamerUsernames.splice(index, 1);
+        updateNumbersOfStreamers();
+        updateVideoOrdering();
+        updateVisibilityOfVideoContainers();
+    }
+}
+
+function updateNumbersOfStreamers() {
+    numbersOfStreamers.innerHTML = streamerUsernames.length;
+
+    if (streamerUsernames.length >= MAX_STREAMERS) {
+        setStreamAbility(false);
+    } else if (!currentlyStreaming) {
+        setStreamAbility(true);
+    }
+}
+
+function addUsername(username) {
+    if (allUsernames.indexOf(username) === -1) {
+        allUsernames.push(username);
+        updateNumbersOfUsers();
+    }
+}
+
+function removeUsername(username) {
+    index = allUsernames.indexOf(username);
+    if (index !== -1) {
+        allUsernames.splice(index, 1);
+        removeStreamerUsername(username);  // ensure streamers is subset of all
+        updateNumbersOfUsers();
+    }
+}
+
+function updateNumbersOfUsers() {
+    numbersOfUsers.innerHTML = allUsernames.length;
+}
+
+function setStreamAbility(bool) {
+    getElement('#allow-webcam').disabled = !bool;
+}
+
+function appendVideoElement(mediaElement) {
+    if (streamerUsernames.length > MAX_STREAMERS) {
+        return;
+    }
+
+    for (var i = 0; i < videoContainers.length; i++) {
+        if (!videoContainers[i].hasChildNodes()) {
+            videoContainers[i].appendChild(mediaElement);
+            break;
+        }
+    }
+    updateVideoOrdering();
+    updateVisibilityOfVideoContainers();
+}
+
+/* We have 4 video elements.
+ *
+ * If we have N streams, this ensures that
+ * the first N elements are being occupied
+ *
+ */
+function updateVideoOrdering() {
+    var containersWithVideos = [];
+    for (var i = 0; i < videoContainers.length; i++) {
+        if (videoContainers[i].hasChildNodes()) {
+            containersWithVideos.push(videoContainers[i]);
+        }
+    }
+
+    var primaryVideoContainer = getElement('.primary-video');
+    if (!primaryVideoContainer.hasChildNodes() && containersWithVideos.length > 0) {
+        containersWithVideos[0].className = 'primary-video';
+        primaryVideoContainer.className = 'secondary-video';
+    }
+}
+
+function updateVisibilityOfVideoContainers() {
+    for (var i = 0; i < videoContainers.length; i++) {
+        vc = videoContainers[i];
+        vc.style.display = vc.hasChildNodes() ? 'initial' : 'none';
+    }
 }
