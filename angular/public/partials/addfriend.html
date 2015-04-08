@@ -1,0 +1,63 @@
+<div class="container">
+      <p> Search for Friends</p>
+</div>
+
+
+<form method="post" ng-submit="getUsersList()" name="SearchForm">
+          <div class="form-group has-feedback">
+            <input type="text" class = "form-control input-md" ng-model="email" placeholder = "Email" />
+          </div>
+
+          <button type="submit" class="btn btn-md  btn-block btn-primary">Search</button>
+
+          <br/>
+ </form>
+
+<div class="container">
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      Results
+      <div class="pull-right">
+      	<button ng-click="addFriend()" type="submit" class="btn btn-sm  btn-block btn-success">Add</button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="row show-list">
+ 
+          <div class="text-center">
+          	<p class="text-muted"> {{returneduser.displayName}}</p>
+            <p class="text-muted"> {{returneduser.email}}</p>
+          </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="container">
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      Friend List
+    </div>
+    <div class="panel-body">
+      <div class="row show-list" ng-repeat="friend in returnedfriends">
+          <table st-table="rowCollection" class="table table">
+           <thead>
+            <tr>
+              <th>Display Name</th>
+              <th>email</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="femail in friend.friends">
+            <td>{{friend.name}}</td>
+            <td>{{femail.friend_email}}</td>
+          </tr>
+       </tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+ 

@@ -1,0 +1,87 @@
+<div ng-if="!isAuthenticated()">
+ <div class="jumbotron">
+      <h2>TempAppName</h2>
+      <p> To continue, please log in or create a new email account.</p>
+      <p>
+        <a class="btn btn-lg btn-success" href="/login"><i class="ion-log-in"></i> Log in</a>
+        <a class="btn btn-lg btn-primary" href="/signup"><i class="ion-person-add"></i> Create account</a>
+      </p>
+
+  </div>
+</div>
+
+<div ng-if="isAuthenticated()">
+  <div class="jumbotron">
+    <div class="container">
+       <a href="/room" class="btn btn-primary">Create Room</a>
+      <button ng-click="getUserLocation()" class="btn btn-primary" type="submit" >
+          Update Location
+      </button>
+    </div>
+  </div>
+  <div class="container">
+  <div class="panel panel-info">
+    <div class="panel-heading">
+      Friends
+      <div class="pull-right">
+
+      </div>
+    </div>
+    <div class="panel-body">
+      
+          <table st-table="rowCollection" class="table table">
+           <thead>
+            <tr>
+              <th>Display Name</th>
+              <th>email</th>
+              <th>Open Rooms</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="friend in friendinfo">
+            <td>{{friend.displayName}}</td>
+            <td>{{friend.email}}</td>
+            <td><a href="">{{friend.rooms}}</a></td>
+          </tr>
+       </tbody>
+      </table>
+      </div>
+    </div>
+</div>
+<div class="container">
+  <div class="panel panel-info">
+    <div class="panel-heading">
+      Rooms
+      <div class="pull-right">
+        <input st-search="" class="search" type="text" ng-model="query" placeholder="Search...">
+      </div>
+    </div>
+    <div class="panel-body">
+      
+        <table st-table="rowCollection" class="table table">
+           <thead>
+            <tr>
+              <th>Room Name</th>
+              <th>Room Id</th>
+              <th>Owner</th>
+              <th>Distance (mi)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="room in finalroominfo | filter: query">
+            <td>{{room.roomName}}</td>
+            <td><a href="">{{room.roomId}}</a></td>
+            <td>{{room.owner}}</td>
+            <td>{{room.distance}}</td>
+          </tr>
+       </tbody>
+      </table>
+    
+    </div>
+  </div>
+</div>
+</div>
+
+
+
+</div>
