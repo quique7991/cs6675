@@ -80,13 +80,14 @@ body {
 
 #info-bar .settings {
     float: right;
+    padding-left: 3px;
 }
 
 #settings {
     background-repeat: no-repeat;/*
-    background-position: center right;*/
+    background-position: center right;
     background-position: center center;
-    background-image: url('images/settings.png');/*
+    background-image: url('images/settings.png');
     padding-right: 35px;
     margin-top: -1px;*/
 }
@@ -98,6 +99,11 @@ body {
     height: 35px;
     background-repeat: no-repeat;
     background-position: center center;
+}
+
+.glyphicon {
+    horiz-align: center;
+    vertical-align: middle;
 }
 
 /*
@@ -182,24 +188,23 @@ body {
 
 button/*, .users-list*/
 {
-	padding: 5px 10px;
 	cursor: pointer;
-	display:inline-block;
-	color: #FDFDFD;/*
+	display:inline-block;/*
 	font-size: 20px;*/
     font-size: 1em;
 	color: black;
-	border: 1px solid rgba(231, 72, 50, 0.59);
+	border: 1px solid rgba(100, 100, 100, 0.59);
 	border-radius: 2px;
-	background-color: rgba(204, 60, 25, 0.63);
 }
 button:hover/*, .users-list:hover*/
 {
-	 background-color: rgba(204, 60, 25, 0.83);
+	 /*background-color: rgba(204, 60, 25, 0.83);*/
+    background-color: rgba(51, 51, 51, 0.35);
 }
 button:active/*, .users-list:active*/
 {
-     background-color: rgba(204, 60, 25, 0.9);
+     /*background-color: rgba(204, 60, 25, 0.9);*/
+    background-color: rgba(51, 51, 51, 0.60);
 }
 
 button[disabled], input[type=button][disabled] {
@@ -208,9 +213,13 @@ button[disabled], input[type=button][disabled] {
     color: gray;
     text-shadow: none;
 }
-
+/*
 #allow-webcam {
     background-image: url('images/webcam.png');
+}*/
+
+.glyphicon {
+    font-size: 1.5em;
 }
 
 #allow-mic {
@@ -358,11 +367,7 @@ h1 img {
 }
 
 #save-settings {
-    background-repeat: no-repeat;
-    background-position: center right;
-    background-image: url('images/accepted.png');
-    padding-right: 53px;
-    border-color: rgb(133, 21, 21);
+    border-color: rgb(100, 100, 100);
 }
 
 .settings-panel {

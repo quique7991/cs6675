@@ -20,8 +20,8 @@ angular.module('MyApp')
           creater: $scope.user.email,
           roomLocation:$scope.user.infos[0].currlocation
           }).success(function() {
-            $rootScope.roomid = $scope.uuid,
-            $location.path('/roomtemp');
+            $rootScope.roomid = $scope.uuid;
+            $location.path('/webrtc/' + $scope.uuid);
           })
       })
       .then(function() {
