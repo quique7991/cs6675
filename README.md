@@ -49,6 +49,10 @@ trixie.no-ip.info:12035
 
 sudo turnserver -v -a -b turnserverdb.conf -r trixie.no-ip.info
 
+###Running the mongodb:
+
+mongod --dbpath mongodata
+
 https://plugin.temasys.com.sg/demo/samples/web/content/peerconnection/trickle-ice/index.html
 
 https://webrtchacks.com/rfc5766-turn-server/
