@@ -56,30 +56,20 @@ function addNewMessage(args) {
     document.querySelector('#message-sound').play();
 }
 
-main.querySelector('#your-name').onkeyup = function(e) {
-    if (e.keyCode != 13) return;
-    main.querySelector('#continue').onclick();
-};
-
-main.querySelector('#room-name').onkeyup = function(e) {
-    if (e.keyCode != 13) return;
-    main.querySelector('#continue').onclick();
-};
-
-main.querySelector('#room-name').value = (Math.random() * 1000).toString().replace('.', '');
-
-main.querySelector('#continue').onclick = function() {
+/*
+main.querySelector('#continue').onclick = function () {
     var yourName = this.parentNode.querySelector('#your-name');
     var roomName = this.parentNode.querySelector('#room-name');
-    
-    if(!roomName.value || !roomName.value.length) {
-        roomName.focus();
-        return alert('Your MUST Enter Room Name!');
-    }
-    
-    yourName.disabled = roomName.disabled = this.disabled = true;
 
-    var username = yourName.value || 'Anonymous';
+    var username = yourName.value;
+    var roomId = roomName.value;
+    continueclick(username, roomId);
+};
+*/
+
+function continueclick(user, roomId) {
+    var username = user.email;
+    var displayName = username;  // todo: use display name for logs
     addUsername(username);
 
     rtcMultiConnection.extra = {
@@ -88,38 +78,37 @@ main.querySelector('#continue').onclick = function() {
     };
 
     addNewMessage({
-        header: username,
+        header: displayName,
         message: 'Searching for existing rooms...',
         userinfo: '<img src="images/action-needed.png">'
     });
-    
-    var roomid = main.querySelector('#room-name').value;
-    rtcMultiConnection.channel = roomid;
+
+    rtcMultiConnection.channel = roomId;
 
     var websocket = new WebSocket(SIGNALING_SERVER);
     websocket.onmessage = function(event) {
         var data = JSON.parse(event.data);
         if (data.isChannelPresent == false) {
             addNewMessage({
-                header: username,
-                message: 'No room found.  Creating room ' + roomid + '...',
+                header: displayName,
+                message: 'No room found.  Creating room ' + roomId + '...',
                 userinfo: '<img src="images/action-needed.png">'
             });
 
             rtcMultiConnection.open();
         } else {
             addNewMessage({
-                header: username,
+                header: displayName,
                 message: 'Room found. Joining the room...',
                 userinfo: '<img src="images/action-needed.png">'
             });
-            rtcMultiConnection.join(roomid);
+            rtcMultiConnection.join(roomId);
         }
     };
     websocket.onopen = function() {
         websocket.send(JSON.stringify({
             checkPresence: true,
-            channel: roomid
+            channel: roomId
         }));
     };
 };
@@ -132,7 +121,10 @@ var isShiftKeyPressed = false;
 
 var currentlyStreaming = false;
 getElement('#allow-webcam').onclick = function() {
-    currentlyStreaming = true;
+    if (currentlyStreaming) {
+        return;
+    }
+    //currentlyStreaming = true;
 
     this.disabled = true;
 

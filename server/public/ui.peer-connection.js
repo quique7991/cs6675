@@ -102,6 +102,15 @@ rtcMultiConnection.onopen = function(e) {
     });
 
     addUsername(e.extra.username);
+
+    if (currentlyStreaming) {
+        console.log("TRYING TO RENEGOTIATE");
+        console.log(rtcMultiConnection.peers, e);
+        rtcMultiConnection.peers[e.userid].addStream({
+            video: true,
+            oneway: true
+        });
+    }
 };
 
 var whoIsTyping = document.querySelector('#who-is-typing');
@@ -154,11 +163,13 @@ rtcMultiConnection.onRequest = function(request) {
 
 rtcMultiConnection.onCustomMessage = function(message) {
     if (message.hasCamera || message.hasScreen) {
-        var msg = message.extra.username + ' enabled webcam. <button id="preview">Preview</button> ---- <button id="share-your-cam">Share Your Webcam</button>';
-
-        if (message.hasScreen) {
-            msg = message.extra.username + ' is ready to share screen. <button id="preview">View His Screen</button> ---- <button id="share-your-cam">Share Your Screen</button>';
-        }
+        message.session.oneway = true;
+        rtcMultiConnection.sendMessage({
+            renegotiate: true,
+            streamid: message.streamid,
+            session: message.session
+        });
+        return;
 
         addNewMessage({
             header: message.extra.username,
@@ -169,12 +180,7 @@ rtcMultiConnection.onCustomMessage = function(message) {
                 div.querySelector('#preview').onclick = function() {
                     this.disabled = true;
 
-                    message.session.oneway = true;
-                    rtcMultiConnection.sendMessage({
-                        renegotiate: true,
-                        streamid: message.streamid,
-                        session: message.session
-                    });
+
                 };
 
                 div.querySelector('#share-your-cam').onclick = function() {
@@ -259,6 +265,17 @@ rtcMultiConnection.onCustomMessage = function(message) {
 
 rtcMultiConnection.blobURLs = { };
 rtcMultiConnection.onstream = function(e) {
+    /*
+     * Currently, this is how we prevent multiple
+     * copies of our own stream when we attempt to
+     * addStream to new viewers in onopen() event
+     */
+    if (e.userid === rtcMultiConnection.userid
+            && currentlyStreaming) {
+        return;
+    }
+
+
     if (e.stream.getVideoTracks().length) {
         rtcMultiConnection.blobURLs[e.userid] = e.blobURL;
         /*
@@ -272,6 +289,10 @@ rtcMultiConnection.onstream = function(e) {
             userinfo: '<video id="' + e.userid + '" src="' + URL.createObjectURL(e.stream) + '" autoplay muted=true volume=0></vide>',
             color: e.extra.color
         });
+
+        if (e.userid === rtcMultiConnection.userid) {
+            currentlyStreaming = true;
+        }
     } else {
         addNewMessage({
             header: e.extra.username,
@@ -301,4 +322,5 @@ rtcMultiConnection.onclose = rtcMultiConnection.onleave = function(event) {
     });
 
     removeUsername(event.extra.username);
+    console.log("Remaining usernames", allUsernames);
 };
