@@ -13,9 +13,9 @@
 
 	openssl req -newkey rsa:2048 -new -nodes -x509 -keyout turn_server_key.pem -out turn_server_cert.pem
 
-3. Run turnserver in the directory with your keys.
+3. Run turnserver in the directory with your keys. (replace [URL] with the URL or IP of the machine)
 
-	sudo turnserver -v -a -b turnserverdb.conf -r <URL>
+	sudo turnserver -v -a -b turnserverdb.conf -r [URL]
 
 4. Create folder for the mongo metadata.
 
@@ -29,7 +29,7 @@
 
 	node signaler.js
 
-7. If necessary, open ports 12034, 12035, and 3000 to your machine, and visit <URL>:3000 in a browser to access the application.
+7. If necessary, open ports 12034, 12035, and 3000 to your machine, and visit [URL]:3000 in a browser to access the application. (replace [URL] with the URL or IP of your machine)
 
 -----
 
