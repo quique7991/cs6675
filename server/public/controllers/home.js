@@ -1,9 +1,13 @@
 angular.module('MyApp')
-  .controller('HomeCtrl', function($scope,$timeout, $window,$alert, $rootScope, $auth, Account,GetUsers,Room) {
+  .controller('HomeCtrl', function($scope,$timeout, $window,$alert, $rootScope, $state, $auth, Account,GetUsers,Room) {
 
 
     $scope.isAuthenticated = function() {
       return $auth.isAuthenticated();
+    };
+
+    $scope.enterRoom = function (roomId, sharing) {
+      $state.go('webrtc', {roomId: roomId, sharing: sharing});
     };
 
     $scope.getFriendRoomList = function() {

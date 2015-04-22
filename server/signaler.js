@@ -336,6 +336,10 @@ app.get('/api/me', ensureAuthenticated, function(req, res) {
  */
  app.post('/api/roomremove', function(req, res) {
     Room.findOne({ room_id: req.body.uuid }, function(err, room) {
+      if (room === null) {
+		  console.log('removing non-existant room');
+		  res.status(200).end();
+	  }
       room.remove()
       room.save(function(err) {
       res.status(200).end();

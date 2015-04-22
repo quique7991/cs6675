@@ -70,6 +70,7 @@
         <tbody>
           <tr ng-repeat="room in finalroominfo | filter: query">
             <td>{{room.roomName}}</td>
+            <td><button ng-click="enterRoom(room.roomId, 'true');">Share</button><button ng-click="enterRoom(room.roomId, 'false');">View</button></td>
             <td><a ui-sref="webrtc({'roomId': room.roomId})">{{room.roomId}}</a></td>
             <td>{{room.owner}}</td>
             <td>{{room.distance}}</td>

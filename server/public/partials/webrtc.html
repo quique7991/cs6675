@@ -1,0 +1,27 @@
+<div id="webrtc-room-view">
+    User: {{ user }}
+    Room: {{ roomId }}
+    Streamers:  {{ streamingUsers.length }} / {{ streamingUsersLimit }}
+
+    --debug-Streamers:  {{ streamingUsers }}
+    --debug-sharingVideo:  {{ isStreaming }}
+    --debug-streamid:  {{ streamid }}
+    --debug-wantsToStream:  {{ wantsToStream }}
+
+    <!--
+    <button class="pull-right glyphicon glyphicon-facetime-video"
+            ng-click="clickVideoIcon();" ng-disabled="!isStreaming && streamingUsers.length >= streamingUsersLimit"></button>
+            -->
+    <div class="container-fluid">
+        <div class="row">
+            <div id="vid1" class="col-xs-12"></div>
+        </div>
+        <div class="row">
+            <div id="vid2" class="col-xs-4"></div>
+            <div id="vid3" class="col-xs-4"></div>
+            <div id="vid4" class="col-xs-4"></div>
+        </div>
+    </div>
+
+    <div id="testVideoContainer"></div>
+</div>
