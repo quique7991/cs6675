@@ -1,6 +1,38 @@
 # cs6675
 ## Advanced Internet Computing Systems and Applications
 
+### How to deploy
+
+1. You need the program turnserver. This program is available via apt-get or pacman, at the least. You should then add a user and password to /usr/local/etc/turnserverdb.conf
+
+	turnserverdb.conf:
+
+		abc:123
+
+2. Generate keys in the directory in which you will run turnserver.
+
+	openssl req -newkey rsa:2048 -new -nodes -x509 -keyout turn_server_key.pem -out turn_server_cert.pem
+
+3. Run turnserver in the directory with your keys.
+
+	sudo turnserver -v -a -b turnserverdb.conf -r <URL>
+
+4. Create folder for the mongo metadata.
+
+	mkdir mongodata
+
+5. Run mongodb.
+
+	mongod -dbpath mongodata
+
+6. Locate and run the signaler which is part of the project. For this, you will need to install nodejs. If there are any errors running the signaler pertaining to missing packages installable via npm, install them as well.
+
+	node signaler.js
+
+7. If necessary, open ports 12034, 12035, and 3000 to your machine, and visit <URL>:3000 in a browser to access the application.
+
+-----
+
 ### Useful notes
 
 To limit the maximum number of connections we can use:
