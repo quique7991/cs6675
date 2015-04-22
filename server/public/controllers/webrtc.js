@@ -1,19 +1,27 @@
 angular.module('MyApp')
-  .controller('webRTCCtrl', function ($scope, $stateParams, $auth, Account, Room) {
+  .controller('webRTCCtrl', function ($scope, $stateParams, $interval, $auth, Account, Room) {
 
     var SIGNALING_SERVER = (location.protocol == 'https:' ? 'wss' : 'ws') + '://'+ document.domain +':12034/';
+    var STREAMING_USERS_LIMIT = 4;
 
-
-    $scope.roomId = $stateParams.roomId;
-
-    var connection = new RTCMultiConnection($scope.roomId);
-    configConnection(connection);
-
+    // values for message.type to be used for custom messages
+    var MESSAGE_TYPE_NEW_VIEWER = 1;
 
     /*
      * TEST
      */
     var testUser = { email: "max@gmail.com" };
+
+    $scope.roomId = $stateParams.roomId;
+    $scope.streamingUsers = [];
+    $scope.viewingUsers = [testUser];
+    $scope.streamingUsersLimit = STREAMING_USERS_LIMIT;
+
+    var connection = new RTCMultiConnection();
+    //var connection = new RTCMultiConnection($scope.roomId);
+    configConnection(connection);
+
+
     enterRoom(connection, testUser, $scope.roomId);
 
     $scope.$on('$destroy', teardown);
@@ -38,7 +46,10 @@ angular.module('MyApp')
 
       // setup callbacks
       connection.onNewSession = onNewSession;
+      connection.onconnected = onConnected;
+      connection.onRequest = onRequest;
       connection.onstream = onStream;
+      connection.onstreamended = onStreamEnded;
       connection.onleave = onLeave;
       connection.onclose = onLeave;
 
@@ -74,6 +85,7 @@ angular.module('MyApp')
        *
        *
        */
+      addStreamingUser(evt.extra.user);
       addVideoElement(evt.mediaElement);
       //document.getElementById('testVideoContainer').appendChild(evt.mediaElement);
       //videos.appendChild(evt.mediaElement);
@@ -95,8 +107,31 @@ angular.module('MyApp')
       }
     }
 
+    function onStreamEnded(evt) {
+      // evt.mediaElement
+      console.log("onStreamEnded", evt);
+      console.warn("onStreamEnded not finished!");
+
+      removeStreamingUser(evt.extra.user);
+    }
+
+    function onRequest(request) {
+      console.log('onRequest', request);
+      this.accept(request);
+
+      addViewingUser(request.extra.user);
+    }
+
+    function onConnected(evt) {
+      console.log('onConnected', evt);
+
+      addViewingUser(evt.extra.user);
+    }
+
     function onLeave(evt) {
       console.log('onLeave', evt);
+
+      removeViewingUser(evt.extra.user);
     }
 
     function enterRoom(connection, user, roomId) {
@@ -115,13 +150,15 @@ angular.module('MyApp')
       //addUsername(username);
 
       connection.extra = {
-        username: username
+        user: user
       };
 
       connection.channel = roomId;
 
       var websocket = new WebSocket(SIGNALING_SERVER);
       websocket.onmessage = function(event) {
+        console.log('enterRoom --> websocket.onmessage');
+
         var data = JSON.parse(event.data);
         if (data.isChannelPresent == false) {
           connection.open();
@@ -130,6 +167,8 @@ angular.module('MyApp')
         }
       };
       websocket.onopen = function() {
+        console.log('enterRoom --> websocket.onopen');
+
         websocket.send(JSON.stringify({
           checkPresence: true,
           channel: roomId
@@ -137,10 +176,21 @@ angular.module('MyApp')
       };
     }
 
-    var count = 0;
     function addVideoElement(videoElement) {
       console.log('addVideoElement', videoElement);
 
+      var videoContainerId = null;
+      switch ($scope.streamingUsers.length) {
+        case 1: videoContainerId = 'vid1'; break;
+        case 2: videoContainerId = 'vid2'; break;
+        case 3: videoContainerId = 'vid3'; break;
+        case 4: videoContainerId = 'vid4'; break;
+      }
+
+      if (videoContainerId) {
+        document.getElementById(videoContainerId).appendChild(videoElement);
+      }
+      /*
       var vid1 = document.getElementById('vid1');
       var vid2 = document.getElementById('vid2');
       if (count === 0) {
@@ -149,9 +199,39 @@ angular.module('MyApp')
       } else {
         vid2.appendChild(videoElement);
       }
+      */
     }
 
+    function addViewingUser(user) {
+      console.log('addViewingUser', user);
+      $scope.viewingUsers.push(user);
+      $scope.$apply();
+    }
 
+    function removeViewingUser(user) {
+      removeUserFromArray(user, $scope.viewingUsers);
+      $scope.$apply();
+    }
+
+    function addStreamingUser(user) {
+      console.log('addStreamingUser', user);
+      $scope.streamingUsers.push(user);
+      $scope.$apply();
+    }
+
+    function removeStreamingUser(user) {
+      removeUserFromArray(user, $scope.streamingUsers);
+      $scope.$apply();
+    }
+
+    function removeUserFromArray(user, usersArray) {
+      for (var i = 0; i < usersArray.length; i++) {
+        if (usersArray[i].email === user.email) {
+          usersArray.splice(i, 1);
+          return;
+        }
+      }
+    }
 
     function configureIceServers(connection) {
       var stunServer = {
@@ -186,6 +266,8 @@ angular.module('MyApp')
         var websocket = new WebSocket(SIGNALING_SERVER);
         websocket.channel = config.channel;
         websocket.onopen = function() {
+          console.log('openSignalingChannel --> websocket.onopen');
+
           websocket.push(JSON.stringify({
             open: true,
             channel: config.channel
@@ -194,6 +276,7 @@ angular.module('MyApp')
             config.callback(websocket);
         };
         websocket.onmessage = function(event) {
+          console.log('openSignalingChannel --> websocket.onmessage');
           config.onmessage(JSON.parse(event.data));
         };
         websocket.push = websocket.send;
