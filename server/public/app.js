@@ -34,7 +34,7 @@ angular.module('MyApp', ['ngResource', 'ngMessages', 'ui.router', 'mgcrea.ngStra
 
       })
        .state('webrtc',{
-        url: '/webrtc/:roomId',
+        url: '/webrtc/:roomId?sharing',
         templateUrl: 'partials/webrtc.html',
         controller: 'webRTCCtrl'
 

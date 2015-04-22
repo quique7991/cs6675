@@ -1,5 +1,5 @@
 angular.module('MyApp')
-  .controller('webRTCCtrl', function ($scope, $stateParams, $interval, $auth, Account, Room) {
+  .controller('webRTCCtrl', function ($scope, $stateParams, $state, $interval, $auth, Account, Room) {
 
     var SIGNALING_SERVER = (location.protocol == 'https:' ? 'wss' : 'ws') + '://'+ document.domain +':12034/';
     var STREAMING_USERS_LIMIT = 4;
@@ -12,23 +12,25 @@ angular.module('MyApp')
      */
     var testUser = { email: "max@gmail.com " + Math.random() };
 
-    $scope.user = testUser;
+
+    var connection;
+
     $scope.roomId = $stateParams.roomId;
+    $scope.wantsToStream = $stateParams.sharing === 'true';
     $scope.streamingUsers = [];
-    $scope.viewingUsers = [testUser];
     $scope.streamingUsersLimit = STREAMING_USERS_LIMIT;
     $scope.isStreaming = false;
     $scope.streamid = null;
     $scope.clickVideoIcon = clickVideoIcon;
 
-    var connection = new RTCMultiConnection($scope.roomId);
-    //var connection = new RTCMultiConnection($scope.roomId);
-    configConnection(connection);
-
-
-    enterRoom(connection, testUser, $scope.roomId);
-
-    $scope.$on('$destroy', teardown);
+    Account.getProfile().then(function success(response) {
+      $scope.user = response.data;
+      setup();
+      $scope.$on('$destroy', function () {
+        console.log("DESTROYing...");
+        teardown();
+      });
+    });
 
 
     function teardown() {
@@ -43,26 +45,44 @@ angular.module('MyApp')
       $scope.streamingUsers = [];
       $scope.isStreaming = false;
       $scope.streamid = null;
-      connection.leave();
+      if ($scope.streamingUsers.length == 0 && $scope.wantsToStream) {
+        console.log('Last streamer in the room');
+        console.warn('TODO: clear from DB');
+        Room.removeRoom({uuid: $scope.roomId});
+        connection.close();
+      } else {
+        connection.leave();
+      }
     }
 
-    var wantsToStream = false;
+    console.log('$stateParams.sharing', $stateParams.sharing);
     function clickVideoIcon() {
-      if (!wantsToStream) {
-        wantsToStream = true;
+      console.log("trying to RELOAD page...");
+      teardown();
+      $state.go($state.current, { roomId: $scope.roomId, sharing: 'true'});
+      /*
+       OLD BROKEN STUFF
+       */
+      /*
+      if (!$scope.wantsToStream) {
+        $scope.wantsToStream = true;
         teardown();
         setup();
       } else {
-        wantsToStream = false;
+        $scope.wantsToStream = false;
         teardown();
         setup();
       }
+      */
     }
 
     function setup() {
       connection = new RTCMultiConnection();
       configConnection(connection);
+      console.warn("don't forget to change back to $scope.user");
+
       enterRoom(connection, testUser, $scope.roomId);
+      //enterRoom(connection, $scope.user, $scope.roomId);
     }
 
     /*
@@ -94,13 +114,13 @@ angular.module('MyApp')
 
       connection.session = {
         video: true,
-        audio: false
+        audio: false,
+        oneway: !$scope.wantsToStream
       };
 
       // setup callbacks
       connection.onNewSession = onNewSession;
-      connection.onconnected = onConnected;
-      connection.onRequest = onRequest;
+      //connection.onRequest = onRequest;
       connection.onstream = onStream;
       connection.onstreamended = onStreamEnded;
       connection.onleave = onLeave;
@@ -112,7 +132,7 @@ angular.module('MyApp')
     function onNewSession(session) {
       console.log("onNewSession", session);
       session.join({
-        video: wantsToStream
+        video: $scope.wantsToStream
       });
     }
 
@@ -134,13 +154,18 @@ angular.module('MyApp')
        *
        */
       if (alreadyReceivedStream(evt.extra.user)) {
-        console.warn("receiving same stream again!");
+        console.warn("receiving same stream again!", evt.extra.user, $scope.streamingUsers);
         return;
       }
 
       if (evt.extra.user.email === $scope.user.email
-            && !wantsToStream) {
+            && !$scope.wantsToStream) {
         console.warn('trying to stream when we dont want to stream!');
+        return;
+      }
+
+      if ($scope.streamingUsers.length === $scope.streamingUsersLimit) {
+        console.warn('streamingUsersLimit was reached!');
         return;
       }
 
@@ -177,23 +202,8 @@ angular.module('MyApp')
       }
     }
 
-    function onRequest(request) {
-      console.log('onRequest', request);
-      this.accept(request);
-
-      addViewingUser(request.extra.user);
-    }
-
-    function onConnected(evt) {
-      console.log('onConnected', evt);
-
-      addViewingUser(evt.extra.user);
-    }
-
     function onLeave(evt) {
       console.log('onLeave', evt);
-
-      removeViewingUser(evt.extra.user);
     }
 
     function enterRoom(connection, user, roomId) {
@@ -224,12 +234,21 @@ angular.module('MyApp')
         var data = JSON.parse(event.data);
         if (data.isChannelPresent == false) {
           console.log("CALLING OPEN===", connection);
-          wantsToStream = true;
-          connection.open();
+          $scope.wantsToStream = true;
+          /*
+          connection.open({
+            sessionid: connection.channel,
+            captureUserMediaOnDemand: false
+          });
+          */
+          connection.open({
+            sessionid: connection.channel
+          });
+          //connection.open();
         } else {
           console.log("CALLING JOIN===", connection);
-          connection.connect(connection.channel);
-          //connection.join(roomId);
+          //connection.connect(connection.channel);
+          connection.join(roomId);
         }
       };
       websocket.onopen = function() {
@@ -246,6 +265,16 @@ angular.module('MyApp')
       console.log('addVideoElement', videoElement);
 
       var videoContainerId = null;
+
+      for (var i = 1; i <= 4; i++) {
+        var elemId = 'vid' + i;
+        if (!document.getElementById(elemId).firstChild) {
+          document.getElementById(elemId).appendChild(videoElement);
+          return;
+        }
+      }
+
+      /*
       switch ($scope.streamingUsers.length) {
         case 1: videoContainerId = 'vid1'; break;
         case 2: videoContainerId = 'vid2'; break;
@@ -255,18 +284,7 @@ angular.module('MyApp')
 
       if (videoContainerId) {
         document.getElementById(videoContainerId).appendChild(videoElement);
-      }
-    }
-
-    function addViewingUser(user) {
-      console.log('addViewingUser', user);
-      $scope.viewingUsers.push(user);
-      $scope.$apply();
-    }
-
-    function removeViewingUser(user) {
-      removeUserFromArray(user, $scope.viewingUsers);
-      $scope.$apply();
+      }*/
     }
 
     function alreadyReceivedStream(user) {

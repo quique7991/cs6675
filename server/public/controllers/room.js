@@ -1,5 +1,5 @@
 angular.module('MyApp')
-  .controller('RoomCtrl', function($scope, $window, $rootScope,$location, $auth,$alert, Account,GetUsers, Room) {
+  .controller('RoomCtrl', function($scope, $window, $rootScope,$location,$state, $auth,$alert, Account,GetUsers, Room) {
 
    // $scope.uuid = "aaaaaaa";
 
@@ -21,7 +21,8 @@ angular.module('MyApp')
           roomLocation:$scope.user.infos[0].currlocation
           }).success(function() {
             $rootScope.roomid = $scope.uuid;
-            $location.path('/webrtc/' + $scope.uuid);
+            $state.go('webrtc', {roomId: $scope.uuid, sharing: 'true'});
+            //$location.path('/webrtc/' + $scope.uuid + '?sharing=true');
           })
       })
       .then(function() {
