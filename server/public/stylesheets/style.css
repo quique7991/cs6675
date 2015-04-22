@@ -6,3 +6,11 @@ body {
 a {
   color: #00B7FF;
 }
+
+
+/*
+ * For webrtc view
+ */
+.container-fluid div video {
+  width: 100%;
+}

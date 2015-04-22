@@ -35,8 +35,8 @@ angular.module('MyApp', ['ngResource', 'ngMessages', 'ui.router', 'mgcrea.ngStra
       })
        .state('webrtc',{
         url: '/webrtc/:roomId',
-        templateUrl: 'indexRoom.html',
-        controller: 'tempRoomCtrl'
+        templateUrl: 'partials/webrtc.html',
+        controller: 'webRTCCtrl'
 
       })
        .state('roomtemp',{
