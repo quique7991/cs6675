@@ -3,7 +3,7 @@
 
 ### How to deploy
 
-1. You need the program turnserver. This program is available via apt-get or pacman, at the least. You should then add a user and password to /usr/local/etc/turnserverdb.conf
+1. You need the program turnserver. This program is available as a binary via apt-get, or source via http://turnserver.sourceforge.net/. You should then add a user and password to /usr/local/etc/turnserverdb.conf.
 
 	turnserverdb.conf:
 
