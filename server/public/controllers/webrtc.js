@@ -19,6 +19,7 @@ angular.module('MyApp')
     $scope.streamingUsersLimit = STREAMING_USERS_LIMIT;
     $scope.isStreaming = false;
     $scope.streamid = null;
+    $scope.clickVideoIcon = clickVideoIcon;
 
     var connection = new RTCMultiConnection($scope.roomId);
     //var connection = new RTCMultiConnection($scope.roomId);
@@ -46,7 +47,25 @@ angular.module('MyApp')
     }
 
     var wantsToStream = false;
+    function clickVideoIcon() {
+      if (!wantsToStream) {
+        wantsToStream = true;
+        teardown();
+        setup();
+      } else {
+        wantsToStream = false;
+        teardown();
+        setup();
+      }
+    }
 
+    function setup() {
+      connection = new RTCMultiConnection();
+      configConnection(connection);
+      enterRoom(connection, testUser, $scope.roomId);
+    }
+
+    /*
     setTimeout(function () {
       console.log("About to kill connection...");
       if (connection.isInitiator) {
@@ -60,10 +79,10 @@ angular.module('MyApp')
       setTimeout(function () {
         connection = new RTCMultiConnection();
         configConnection(connection);
-        wantsToStream = true;
         enterRoom(connection, testUser, $scope.roomId);
       }, 5000);
     }, 5000);
+    */
 
 
 
@@ -115,9 +134,16 @@ angular.module('MyApp')
        *
        */
       if (alreadyReceivedStream(evt.extra.user)) {
-        console.log("receiving same stream again!");
+        console.warn("receiving same stream again!");
         return;
       }
+
+      if (evt.extra.user.email === $scope.user.email
+            && !wantsToStream) {
+        console.warn('trying to stream when we dont want to stream!');
+        return;
+      }
+
       addStreamingUser(evt.extra.user, evt.streamid);
       addVideoElement(evt.mediaElement);
       //document.getElementById('testVideoContainer').appendChild(evt.mediaElement);
@@ -198,6 +224,7 @@ angular.module('MyApp')
         var data = JSON.parse(event.data);
         if (data.isChannelPresent == false) {
           console.log("CALLING OPEN===", connection);
+          wantsToStream = true;
           connection.open();
         } else {
           console.log("CALLING JOIN===", connection);
