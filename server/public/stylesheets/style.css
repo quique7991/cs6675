@@ -11,6 +11,11 @@ a {
 /*
  * For webrtc view
  */
-.container-fluid div video {
+#webrtc-room-view .container-fluid div video {
   width: 100%;
+}
+
+#webrtc-room-view button {
+  width: 30px;
+  height: 30px;
 }

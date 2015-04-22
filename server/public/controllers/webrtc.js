@@ -10,14 +10,17 @@ angular.module('MyApp')
     /*
      * TEST
      */
-    var testUser = { email: "max@gmail.com" };
+    var testUser = { email: "max@gmail.com " + Math.random() };
 
+    $scope.user = testUser;
     $scope.roomId = $stateParams.roomId;
     $scope.streamingUsers = [];
     $scope.viewingUsers = [testUser];
     $scope.streamingUsersLimit = STREAMING_USERS_LIMIT;
+    $scope.isStreaming = false;
+    $scope.streamid = null;
 
-    var connection = new RTCMultiConnection();
+    var connection = new RTCMultiConnection($scope.roomId);
     //var connection = new RTCMultiConnection($scope.roomId);
     configConnection(connection);
 
@@ -29,15 +32,46 @@ angular.module('MyApp')
 
     function teardown() {
       console.log('Exiting room...');
+      ['vid1', 'vid2', 'vid3', 'vid4'].forEach(function (id) {
+        var elem = document.getElementById(id);
+        if (elem.firstChild) {
+          console.log("ATTEMPTING TO REMOVE CHILD", elem.firstChild);
+          elem.removeChild(elem.firstChild);
+        }
+      });
+      $scope.streamingUsers = [];
+      $scope.isStreaming = false;
+      $scope.streamid = null;
       connection.leave();
     }
 
+    var wantsToStream = false;
+
+    setTimeout(function () {
+      console.log("About to kill connection...");
+      if (connection.isInitiator) {
+        console.log("...abort kill b/c initiator");
+        return;
+      }
+
+      teardown();
+
+      console.log("About to restart new connection...");
+      setTimeout(function () {
+        connection = new RTCMultiConnection();
+        configConnection(connection);
+        wantsToStream = true;
+        enterRoom(connection, testUser, $scope.roomId);
+      }, 5000);
+    }, 5000);
 
 
 
     function configConnection(connection) {
       configureIceServers(connection);
       setupSignalingChannel(connection);
+
+      connection.dontOverrideSession = true;
 
       connection.session = {
         video: true,
@@ -56,16 +90,11 @@ angular.module('MyApp')
       console.log("Finished configuring connection", connection);
     }
 
-    var sessions = { };
     function onNewSession(session) {
       console.log("onNewSession", session);
-
-      if (sessions[session.sessionid]) {
-        return;
-      }
-
-      sessions[session.sessionid] = session;
-      session.join();
+      session.join({
+        video: wantsToStream
+      });
     }
 
     // from other
@@ -85,7 +114,11 @@ angular.module('MyApp')
        *
        *
        */
-      addStreamingUser(evt.extra.user);
+      if (alreadyReceivedStream(evt.extra.user)) {
+        console.log("receiving same stream again!");
+        return;
+      }
+      addStreamingUser(evt.extra.user, evt.streamid);
       addVideoElement(evt.mediaElement);
       //document.getElementById('testVideoContainer').appendChild(evt.mediaElement);
       //videos.appendChild(evt.mediaElement);
@@ -113,6 +146,9 @@ angular.module('MyApp')
       console.warn("onStreamEnded not finished!");
 
       removeStreamingUser(evt.extra.user);
+      if (evt.mediaElement.parentNode) {
+        evt.mediaElement.parentNode.removeChild(evt.mediaElement);
+      }
     }
 
     function onRequest(request) {
@@ -161,9 +197,12 @@ angular.module('MyApp')
 
         var data = JSON.parse(event.data);
         if (data.isChannelPresent == false) {
+          console.log("CALLING OPEN===", connection);
           connection.open();
         } else {
-          connection.join(roomId);
+          console.log("CALLING JOIN===", connection);
+          connection.connect(connection.channel);
+          //connection.join(roomId);
         }
       };
       websocket.onopen = function() {
@@ -190,16 +229,6 @@ angular.module('MyApp')
       if (videoContainerId) {
         document.getElementById(videoContainerId).appendChild(videoElement);
       }
-      /*
-      var vid1 = document.getElementById('vid1');
-      var vid2 = document.getElementById('vid2');
-      if (count === 0) {
-        vid1.appendChild(videoElement);
-        count = 1;
-      } else {
-        vid2.appendChild(videoElement);
-      }
-      */
     }
 
     function addViewingUser(user) {
@@ -213,14 +242,35 @@ angular.module('MyApp')
       $scope.$apply();
     }
 
-    function addStreamingUser(user) {
+    function alreadyReceivedStream(user) {
+      for (var i = 0; i < $scope.streamingUsers.length; i++) {
+        if ($scope.streamingUsers[i].email === user.email) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function addStreamingUser(user, streamid) {
       console.log('addStreamingUser', user);
       $scope.streamingUsers.push(user);
+
+      if (user.email === $scope.user.email) {
+        $scope.isStreaming = true;
+        $scope.streamid = streamid;
+      }
+
       $scope.$apply();
     }
 
     function removeStreamingUser(user) {
       removeUserFromArray(user, $scope.streamingUsers);
+
+      if (user.email === $scope.user.email) {
+        $scope.isStreaming = false;
+        $scope.streamid = null;
+      }
+
       $scope.$apply();
     }
 
