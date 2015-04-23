@@ -81,7 +81,7 @@ angular.module('MyApp')
       configConnection(connection);
       console.warn("don't forget to change back to $scope.user");
 
-      enterRoom(connection, testUser, $scope.roomId);
+      enterRoom(connection, $scope.user, $scope.roomId);
       //enterRoom(connection, $scope.user, $scope.roomId);
     }
 
