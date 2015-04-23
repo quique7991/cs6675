@@ -62,16 +62,15 @@
            <thead>
             <tr>
               <th>Room Name</th>
-              <th>Room Id</th>
+              <th>Join</th>
               <th>Owner</th>
               <th>Distance (mi)</th>
           </tr>
         </thead>
         <tbody>
-          <tr ng-repeat="room in finalroominfo | filter: query">
+          <tr ng-repeat="room in finalroominfo | filter: query | orderBy: '+distance'">
             <td>{{room.roomName}}</td>
             <td><button ng-click="enterRoom(room.roomId, 'true');">Share</button><button ng-click="enterRoom(room.roomId, 'false');">View</button></td>
-            <td><a ui-sref="webrtc({'roomId': room.roomId})">{{room.roomId}}</a></td>
             <td>{{room.owner}}</td>
             <td>{{room.distance}}</td>
           </tr>

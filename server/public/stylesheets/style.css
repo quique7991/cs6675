@@ -19,3 +19,11 @@ a {
   width: 30px;
   height: 30px;
 }
+
+#webrtc-room-view .container-fluid .row {
+  max-width: 700px;
+}
+
+#webrtc-room-view #vid1 {
+  margin: 0 auto;
+}
